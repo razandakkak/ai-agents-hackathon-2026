@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Translating Your Needs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chivo:wght@400;600;800&family=Space+Grotesk:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <section id="landing-view" class="view active">
+        <header class="hero landing-hero">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="eyebrow">AI Agents Hackathon 2026</p>
+            <h1 data-i18n="landingTitle">Translating Your Needs</h1>
+            <p class="hero-text" data-i18n="landingHeroText">
+              A multi-agent accessibility and emergency support project for Lebanon, starting with blood support and expanding into inclusive mobility and hearing-access assistance.
+            </p>
+          </div>
+          <div class="hero-card">
+            <div class="language-switch">
+              <span data-i18n="languageLabel">Language</span>
+              <select id="language-select" name="language">
+                <option value="en">English</option>
+                <option value="ar">العربية</option>
+              </select>
+            </div>
+            <span class="hero-label" data-i18n="landingCardLabel">Project vision</span>
+            <strong data-i18n="landingCardTitle">One platform, multiple support tracks</strong>
+            <p data-i18n="landingCardText">
+              Users choose the support path they need, and each agent is designed around real local problems, practical actions, and safe next steps.
+            </p>
+          </div>
+        </header>
+
+        <section class="panel landing-panel">
+          <div class="section-head">
+            <p class="eyebrow" data-i18n="trackEyebrow">Support Tracks</p>
+            <h2 data-i18n="trackTitle">Choose a track</h2>
+          </div>
+
+          <div class="track-grid">
+            <article class="track-card">
+              <span class="track-status live" data-i18n="statusLive">Live now</span>
+              <h3 data-i18n="bloodTrackTitle">Blood support</h3>
+              <p data-i18n="bloodTrackText">
+                AI chat that collects urgent request details, checks official context, finds donor matches, and helps send outreach emails.
+              </p>
+              <button type="button" class="track-button" data-track="blood" data-i18n="openBloodTrack">Open blood agent</button>
+            </article>
+
+            <article class="track-card">
+              <span class="track-status soon" data-i18n="statusSoon">Coming next</span>
+              <h3 data-i18n="wheelchairTrackTitle">Wheelchair accessibility</h3>
+              <p data-i18n="wheelchairTrackText">
+                A future assistant for discovering accessible places, entrances, and movement-friendly options across Lebanese cities.
+              </p>
+              <button type="button" class="track-button secondary" data-track="wheelchair" data-i18n="openWheelchairTrack">View roadmap</button>
+            </article>
+
+            <article class="track-card">
+              <span class="track-status live" data-i18n="statusLive">Live now</span>
+              <h3 data-i18n="hearingTrackTitle">Hearing accessibility</h3>
+              <p data-i18n="hearingTrackText">
+                A future support track for people with hearing impairments, focused on accessible communication and service discovery.
+              </p>
+              <button type="button" class="track-button" data-track="hearing" data-i18n="openHearingTrack">Open hearing copilot</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="landing-columns">
+          <article class="panel landing-panel">
+            <div class="section-head">
+              <p class="eyebrow" data-i18n="existsEyebrow">What exists today</p>
+              <h2 data-i18n="existsTitle">Already implemented</h2>
+            </div>
+            <ul id="exists-list" class="action-list"></ul>
+          </article>
+
+          <article class="panel landing-panel">
+            <div class="section-head">
+              <p class="eyebrow" data-i18n="roadmapEyebrow">What comes next</p>
+              <h2 data-i18n="roadmapTitle">Upcoming features</h2>
+            </div>
+            <ul id="roadmap-list" class="action-list"></ul>
+          </article>
+        </section>
+      </section>
+
+      <section id="blood-view" class="view hidden">
+        <div class="view-toolbar">
+          <button type="button" class="back-button" data-track="home" data-i18n="backHome">Back to home</button>
+          <span class="view-pill" data-i18n="bloodTrackTitle">Blood support</span>
+        </div>
+
+        <header class="hero">
+          <div class="hero-copy">
+            <p class="eyebrow" data-i18n="eyebrow">AI Agents Hackathon 2026</p>
+            <h1 data-i18n="title">Translating Your Needs</h1>
+            <p class="hero-text" data-i18n="heroText">
+              A real AI blood-support chat for Lebanon that asks follow-up questions, generates grounded outreach help, and prefers official sources over fake inventory.
+            </p>
+          </div>
+          <div class="hero-card">
+            <span class="hero-label" data-i18n="activeAgent">Active agent</span>
+            <strong data-i18n="agentName">Blood support chat</strong>
+            <p data-i18n="agentDescription">
+              Tell it what is happening, and it will ask for missing details before preparing a response plan.
+            </p>
+          </div>
+        </header>
+
+        <main class="layout chat-layout">
+          <section class="panel chat-panel">
+            <div class="section-head">
+              <p class="eyebrow" data-i18n="chatEyebrow">Live Chat</p>
+              <h2 data-i18n="chatTitle">Talk to the blood agent</h2>
+            </div>
+
+            <div id="chat-thread" class="chat-thread"></div>
+
+            <form id="chat-form" class="chat-form">
+              <textarea
+                id="chat-input"
+                name="message"
+                rows="3"
+                data-placeholder-key="chatPlaceholder"
+                placeholder="Example: We need 2 units of O- blood in Beirut within 24 hours for surgery."
+              ></textarea>
+              <button type="submit" id="send-button" data-i18n="sendButton">Send</button>
+            </form>
+          </section>
+
+          <section class="panel side-panel">
+            <div class="section-head">
+              <p class="eyebrow" data-i18n="planEyebrow">Live Plan</p>
+              <h2 data-i18n="planTitle">What the agent knows</h2>
+            </div>
+
+            <div class="summary-card">
+              <span class="status-dot"></span>
+              <div>
+                <p class="summary-label" id="summary-label" data-i18n="waitingLabel">Waiting for enough details</p>
+                <p class="summary-text" id="summary-text" data-i18n="waitingText">
+                  Start chatting. The agent will ask for missing details, then prepare an action plan.
+                </p>
+              </div>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="requestTitle">Structured request</h3>
+              <div id="request-chips" class="chip-grid"></div>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="verificationTitle">Verification status</h3>
+              <ul id="verification-list" class="action-list"></ul>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="reasoningTitle">Reasoning</h3>
+              <ul id="reasoning-list" class="action-list"></ul>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="actionsTitle">Recommended actions</h3>
+              <ul id="actions-list" class="action-list"></ul>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="messageTitle">Donor outreach message</h3>
+              <textarea id="donor-message" readonly></textarea>
+              <div class="send-box">
+                <input id="email-recipient" type="email" placeholder="recipient@example.com" />
+                <button id="send-email-button" type="button" data-i18n="sendEmailButton">Confirm and send email</button>
+              </div>
+              <p id="send-email-status" class="send-status"></p>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="sourcesTitle">Official sources</h3>
+              <div id="sources-list" class="sources-list"></div>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="demoDonorsTitle">Demo donor volunteer matches</h3>
+              <div id="demo-donors-list" class="sources-list"></div>
+              <div class="volunteer-signup-box">
+                <h4 data-i18n="joinTitle">Join us to save lives</h4>
+                <div class="signup-grid">
+                  <input id="volunteer-name" type="text" placeholder="Your name" />
+                  <select id="volunteer-blood-type">
+                    <option value="">Blood type</option>
+                    <option>O-</option>
+                    <option>O+</option>
+                    <option>A-</option>
+                    <option>A+</option>
+                    <option>B-</option>
+                    <option>B+</option>
+                    <option>AB-</option>
+                    <option>AB+</option>
+                  </select>
+                  <input id="volunteer-city" type="text" placeholder="City" />
+                  <input id="volunteer-contact" type="text" placeholder="Phone or email" />
+                  <select id="volunteer-contact-preference">
+                    <option value="phone">Phone</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="email">Email</option>
+                  </select>
+                  <input id="volunteer-availability" type="text" placeholder="Availability" />
+                </div>
+                <button id="volunteer-signup-button" type="button" data-i18n="joinButton">Join us to save lives</button>
+                <p id="volunteer-signup-status" class="send-status"></p>
+              </div>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <section id="wheelchair-view" class="view hidden">
+        <div class="view-toolbar">
+          <button type="button" class="back-button" data-track="home" data-i18n="backHome">Back to home</button>
+          <span class="view-pill" data-i18n="wheelchairTrackTitle">Wheelchair accessibility</span>
+        </div>
+        <article class="panel placeholder-panel">
+          <p class="eyebrow" data-i18n="wheelchairEyebrow">Track roadmap</p>
+          <h2 data-i18n="wheelchairPlaceholderTitle">Wheelchair accessibility assistant</h2>
+          <p data-i18n="wheelchairPlaceholderText">
+            This track is reserved for the upcoming accessibility agent. It will focus on suitable places, entrance information, and mobility-friendly planning.
+          </p>
+          <ul id="wheelchair-list" class="action-list"></ul>
+        </article>
+      </section>
+
+      <section id="hearing-view" class="view hidden">
+        <div class="view-toolbar">
+          <button type="button" class="back-button" data-track="home" data-i18n="backHome">Back to home</button>
+          <span class="view-pill" data-i18n="hearingTrackTitle">Hearing accessibility</span>
+        </div>
+        <div class="hearing-layout">
+          <section class="panel hearing-input-panel">
+            <div class="section-head">
+              <p class="eyebrow" data-i18n="hearingEyebrow">Track roadmap</p>
+              <h2 data-i18n="hearingPlaceholderTitle">Hearing accessibility assistant</h2>
+            </div>
+            <p class="hero-text compact" data-i18n="hearingPlaceholderText">
+              This track is ready for the next agent. It can support accessible communication, service discovery, and emergency-friendly guidance for people with hearing impairments.
+            </p>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingNeedTitle">Describe the need</h3>
+              <textarea id="hearing-need-input" rows="4" data-placeholder-key="hearingNeedPlaceholder"></textarea>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingScopeTitle">Search scope</h3>
+              <input id="hearing-scope-input" type="text" data-placeholder-key="hearingScopePlaceholder" />
+            </div>
+
+            <button type="button" id="hearing-search-button" class="track-button" data-i18n="hearingSearchButton">Search from written need</button>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingInputLanguageTitle">Conversation language</h3>
+              <select id="hearing-input-language-select">
+                <option value="ar" data-i18n="hearingInputLanguageArabic">Arabic</option>
+                <option value="mixed" data-i18n="hearingInputLanguageMixed">Lebanese mixed</option>
+                <option value="en" data-i18n="hearingInputLanguageEnglish">English</option>
+              </select>
+            </div>
+
+            <div class="result-block">
+              <div class="inline-heading">
+                <h3 data-i18n="hearingTranscriptTitle">What they said</h3>
+                <button type="button" id="hearing-listen-button" class="track-button secondary slim" data-i18n="hearingListenButton">Start listening</button>
+              </div>
+              <textarea id="hearing-transcript-input" rows="6" data-placeholder-key="hearingTranscriptPlaceholder"></textarea>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingReplyIntentTitle">What you want to reply</h3>
+              <textarea id="hearing-reply-intent-input" rows="4" data-placeholder-key="hearingReplyIntentPlaceholder"></textarea>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingChannelTitle">Preferred reply channel</h3>
+              <select id="hearing-channel-select">
+                <option value="text" data-i18n="hearingChannelText">Text message</option>
+                <option value="whatsapp" data-i18n="hearingChannelWhatsapp">WhatsApp</option>
+                <option value="email" data-i18n="hearingChannelEmail">Email</option>
+                <option value="spoken" data-i18n="hearingChannelSpoken">Spoken reply</option>
+              </select>
+            </div>
+
+            <button type="button" id="hearing-analyze-button" class="track-button" data-i18n="hearingAnalyzeButton">Analyze with hearing copilot</button>
+            <p id="hearing-status" class="send-status"></p>
+          </section>
+
+          <section class="panel hearing-output-panel">
+            <div class="result-block">
+              <h3 data-i18n="hearingResultNeedTitle">Reconstructed need</h3>
+              <p id="hearing-reconstructed-need" class="hearing-result-text"></p>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingBarrierTitle">Barrier detected</h3>
+              <p id="hearing-barrier" class="hearing-result-text"></p>
+              <ul id="hearing-barrier-list" class="action-list"></ul>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingSummaryTitle">What it means</h3>
+              <p id="hearing-summary" class="hearing-result-text"></p>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingNextStepsTitle">Next steps</h3>
+              <ul id="hearing-next-steps" class="action-list"></ul>
+            </div>
+
+            <div class="result-block">
+              <div class="inline-heading">
+                <h3 data-i18n="hearingReplyDraftTitle">Reply draft</h3>
+                <button type="button" id="hearing-speak-button" class="track-button secondary slim" data-i18n="hearingSpeakButton">Speak reply</button>
+              </div>
+              <div class="voice-controls">
+                <select id="hearing-voice-mode-select">
+                  <option value="ai" data-i18n="hearingVoiceModeAi">AI natural voice</option>
+                  <option value="browser" data-i18n="hearingVoiceModeBrowser">Browser voice</option>
+                </select>
+                <select id="hearing-voice-select">
+                  <option value="coral" data-i18n="hearingVoiceFemale">Female voice</option>
+                  <option value="onyx" data-i18n="hearingVoiceMale">Male voice</option>
+                  <option value="marin" data-i18n="hearingVoiceWarm">Warm premium voice</option>
+                  <option value="cedar" data-i18n="hearingVoiceCalm">Calm premium voice</option>
+                </select>
+                <select id="hearing-style-select">
+                  <option value="warm_female" data-i18n="hearingStyleWarm">Warm</option>
+                  <option value="clear_male" data-i18n="hearingStyleClear">Clear</option>
+                  <option value="formal_supportive" data-i18n="hearingStyleFormal">Formal</option>
+                  <option value="gentle_supportive" data-i18n="hearingStyleGentle">Gentle</option>
+                </select>
+              </div>
+              <textarea id="hearing-reply-draft" rows="6"></textarea>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="hearingFollowUpTitle">Follow-up question</h3>
+              <p id="hearing-follow-up" class="hearing-result-text"></p>
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

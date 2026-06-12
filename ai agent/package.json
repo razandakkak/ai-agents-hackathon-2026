@@ -1,0 +1,9 @@
+{
+  "name": "people-in-need-ai-agent",
+  "version": "1.0.0",
+  "private": true,
+  "main": "agents/bloodSupportAgent.js",
+  "dependencies": {
+    "openai": "^6.1.0"
+  }
+}
