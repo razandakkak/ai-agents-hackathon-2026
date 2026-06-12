@@ -1,61 +1,62 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-let transporter;
+let resendClient;
 
 function getMailerConfig() {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT || 587);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.EMAIL_FROM || user;
+  const apiKey = String(process.env.RESEND_API_KEY || "").trim();
+  const from = String(process.env.EMAIL_FROM || "").trim();
+  const replyTo = String(process.env.EMAIL_REPLY_TO || "").trim();
 
-  if (!host || !user || !pass || !from) {
-    const error = new Error("SMTP configuration is incomplete");
-    error.code = "missing_smtp_config";
+  if (!apiKey || !from) {
+    const error = new Error("Resend configuration is incomplete");
+    error.code = "missing_resend_config";
     throw error;
   }
 
   return {
-    host,
-    port,
-    secure: port === 465,
-    auth: {
-      user,
-      pass
-    },
-    from
+    apiKey,
+    from,
+    replyTo
   };
 }
 
-function getTransporter() {
-  if (!transporter) {
+function getResendClient() {
+  if (!resendClient) {
     const config = getMailerConfig();
-    transporter = nodemailer.createTransport({
-      host: config.host,
-      port: config.port,
-      secure: config.secure,
-      auth: config.auth
-    });
+    resendClient = new Resend(config.apiKey);
   }
 
-  return transporter;
+  return resendClient;
 }
 
 async function sendEmail({ to, subject, text }) {
   const config = getMailerConfig();
-  const mailer = getTransporter();
+  const resend = getResendClient();
 
-  const info = await mailer.sendMail({
+  const payload = {
     from: config.from,
-    to,
+    to: Array.isArray(to) ? to : [to],
     subject,
     text
-  });
+  };
+
+  if (config.replyTo) {
+    payload.reply_to = config.replyTo;
+  }
+
+  const result = await resend.emails.send(payload);
+  const error = result && result.error ? result.error : null;
+
+  if (error) {
+    const sendError = new Error(error.message || "Email send failed");
+    sendError.code = "resend_send_failed";
+    throw sendError;
+  }
 
   return {
-    accepted: info.accepted || [],
-    rejected: info.rejected || [],
-    messageId: info.messageId || null
+    accepted: Array.isArray(payload.to) ? payload.to : [payload.to],
+    rejected: [],
+    messageId: result && result.data ? result.data.id || null : null
   };
 }
 
