@@ -1,14 +1,28 @@
 # AI Agents Hackathon 2026 - Translating Your Needs
 
-Translating Your Needs is a low-bandwidth web app for urgent support scenarios in Lebanon.
+Translating Your Needs is a low-bandwidth multi-agent support app for urgent and accessibility-focused scenarios in Lebanon.
 
-This MVP focuses on a blood-support chat agent that helps a family coordinator or volunteer:
-- describe an urgent blood request in natural language,
-- answer follow-up questions from the agent,
-- receive a grounded plan and donor outreach message from OpenAI,
-- see official institutions and live official context when it is publicly reachable.
+This MVP now includes three working agent tracks:
 
-The product shell is intentionally designed so a wheelchair accessibility flow can be merged in later as a second agent experience.
+- Blood support:
+  - collects urgent blood requests in natural language,
+  - asks follow-up questions,
+  - generates a grounded action plan,
+  - shows official institutions and live official context when reachable,
+  - matches demo or network donors,
+  - supports donor outreach by email when SMTP is configured.
+- Wheelchair accessibility:
+  - helps users search accessible restaurants, hotels, and transport,
+  - turns mobility needs into structured accessibility checks,
+  - generates targeted Google Maps searches,
+  - runs live web search for real venue or provider results,
+  - suggests the best practical road or route strategy when pickup and destination are provided.
+- Hearing accessibility:
+  - reconstructs messy or phone-first communication,
+  - analyzes written needs and pasted transcripts,
+  - performs live web search for relevant services,
+  - supports speech-to-text audio transcription,
+  - can generate spoken replies with browser or AI voice output.
 
 ## Structure
 
@@ -93,18 +107,62 @@ Request body:
 
 Returns the verified official institutions currently wired into the app.
 
+### `POST /api/wheelchair-assist`
+
+Request body:
+
+```json
+{
+  "language": "en",
+  "category": "transport",
+  "city": "Beirut",
+  "neighborhood": "Badaro",
+  "userNeed": "I need the easiest wheelchair-friendly route to a mall",
+  "accessibilityNeeds": ["wheelchair_vehicle", "ramp"],
+  "pickup": "Badaro, Beirut",
+  "destination": "City Centre Beirut"
+}
+```
+
+### `POST /api/hearing-assist`
+
+Request body:
+
+```json
+{
+  "language": "en",
+  "inputLanguage": "mixed",
+  "userNeed": "I need an ENT appointment and they should confirm by text.",
+  "searchScope": "clinics",
+  "incomingTranscript": "They said call us tomorrow morning and ask for the doctor.",
+  "replyIntent": "Please confirm by WhatsApp text instead of phone.",
+  "preferredChannel": "whatsapp"
+}
+```
+
+### `POST /api/hearing-transcribe`
+
+Accepts recorded audio in base64 and returns AI speech-to-text transcription.
+
+### `POST /api/hearing-speak`
+
+Generates AI speech audio for the hearing-access reply draft.
+
 ## Notes
 
 - The actual AI generation lives under `ai agent/`.
-- The backend calls `../ai agent/agents/bloodSupportAgent`.
+- The backend currently calls `bloodSupportAgent`, `wheelchairSupportAgent`, and `hearingSupportAgent`.
 - `backend/.env` is the easiest place to set `OPENAI_API_KEY` for local testing.
 - The app no longer claims fake blood inventory.
 - Live official context is currently fetched from the Lebanese Red Cross website when reachable.
 - Email sending is available through `POST /api/send-email` when SMTP env vars are configured.
 - Demo donor volunteer matches are included for showcase purposes only and are clearly marked as demo data.
+- Google Maps is used through standard search and directions URLs, not through a paid Google Maps API integration.
+- The wheelchair route analysis is AI-assisted guidance plus live search context, not guaranteed turn-by-turn navigation.
+- The hearing track can use browser speech recognition fallback or AI transcription, depending on browser support.
 
 ## Demo framing
 
 For the hackathon pitch, describe this as:
 
-> An AI coordination agent for people in need in Lebanon, starting with urgent blood requests and designed to expand into disability accessibility support.
+> A multi-agent coordination platform for people in need in Lebanon, combining blood support, wheelchair accessibility planning, and hearing-access communication help in one product.

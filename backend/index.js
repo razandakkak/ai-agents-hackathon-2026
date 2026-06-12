@@ -12,6 +12,7 @@ const {
   chatWithBloodSupportAgent
 } = require("../ai agent/agents/bloodSupportAgent");
 const { assistWithHearingSupport } = require("../ai agent/agents/hearingSupportAgent");
+const { assistWithWheelchairSupport } = require("../ai agent/agents/wheelchairSupportAgent");
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -82,6 +83,36 @@ app.post("/api/hearing-assist", async (req, res, next) => {
       barrierSignals: result.barrierSignals.length,
       nextSteps: result.nextSteps.length,
       liveSearchResults: Array.isArray(result.liveSearchResults) ? result.liveSearchResults.length : 0
+    }));
+
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/wheelchair-assist", async (req, res, next) => {
+  try {
+    console.info("[api] /api/wheelchair-assist request", JSON.stringify({
+      language: req.body && req.body.language ? req.body.language : "en",
+      category: req.body && req.body.category ? req.body.category : "mixed",
+      city: req.body && req.body.city ? req.body.city : "",
+      neighborhood: req.body && req.body.neighborhood ? req.body.neighborhood : "",
+      needCount: Array.isArray(req.body && req.body.accessibilityNeeds)
+        ? req.body.accessibilityNeeds.length
+        : 0,
+      hasUserNeed: Boolean(req.body && req.body.userNeed),
+      hasPickup: Boolean(req.body && req.body.pickup),
+      hasDestination: Boolean(req.body && req.body.destination)
+    }));
+
+    const result = await assistWithWheelchairSupport(req.body || {});
+
+    console.info("[api] /api/wheelchair-assist response", JSON.stringify({
+      category: result.category,
+      practicalChecks: result.practicalChecks.length,
+      nextSteps: result.nextSteps.length,
+      googleMapsSearches: result.googleMapsSearches.length
     }));
 
     res.json(result);

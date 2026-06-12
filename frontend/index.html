@@ -56,19 +56,19 @@
             </article>
 
             <article class="track-card">
-              <span class="track-status soon" data-i18n="statusSoon">Coming next</span>
+              <span class="track-status live" data-i18n="statusLive">Live now</span>
               <h3 data-i18n="wheelchairTrackTitle">Wheelchair accessibility</h3>
               <p data-i18n="wheelchairTrackText">
-                A future assistant for discovering accessible places, entrances, and movement-friendly options across Lebanese cities.
+                An accessibility copilot for places, transport, live search, and practical route planning across Lebanese cities.
               </p>
-              <button type="button" class="track-button secondary" data-track="wheelchair" data-i18n="openWheelchairTrack">View roadmap</button>
+              <button type="button" class="track-button" data-track="wheelchair" data-i18n="openWheelchairTrack">Open wheelchair copilot</button>
             </article>
 
             <article class="track-card">
               <span class="track-status live" data-i18n="statusLive">Live now</span>
               <h3 data-i18n="hearingTrackTitle">Hearing accessibility</h3>
               <p data-i18n="hearingTrackText">
-                A future support track for people with hearing impairments, focused on accessible communication and service discovery.
+                A communication copilot with live search, speech-to-text, and speak-back support for hearing-access scenarios.
               </p>
               <button type="button" class="track-button" data-track="hearing" data-i18n="openHearingTrack">Open hearing copilot</button>
             </article>
@@ -229,14 +229,134 @@
           <button type="button" class="back-button" data-track="home" data-i18n="backHome">Back to home</button>
           <span class="view-pill" data-i18n="wheelchairTrackTitle">Wheelchair accessibility</span>
         </div>
-        <article class="panel placeholder-panel">
-          <p class="eyebrow" data-i18n="wheelchairEyebrow">Track roadmap</p>
-          <h2 data-i18n="wheelchairPlaceholderTitle">Wheelchair accessibility assistant</h2>
-          <p data-i18n="wheelchairPlaceholderText">
-            This track is reserved for the upcoming accessibility agent. It will focus on suitable places, entrance information, and mobility-friendly planning.
-          </p>
-          <ul id="wheelchair-list" class="action-list"></ul>
-        </article>
+        <div class="wheelchair-layout">
+          <section class="panel wheelchair-input-panel">
+            <div class="section-head">
+              <p class="eyebrow" data-i18n="wheelchairEyebrow">Track roadmap</p>
+              <h2 data-i18n="wheelchairPlaceholderTitle">Wheelchair accessibility assistant</h2>
+            </div>
+            <p class="hero-text compact" data-i18n="wheelchairPlaceholderText">
+              This track is reserved for the upcoming accessibility agent. It will focus on suitable places, entrance information, and mobility-friendly planning.
+            </p>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairCategoryTitle">Choose the access track</h3>
+              <select id="wheelchair-category-select">
+                <option value="dining" data-i18n="wheelchairCategoryDining">Accessible Restaurants / Coffee Shops</option>
+                <option value="stay" data-i18n="wheelchairCategoryStay">Accessible Hotels / Resorts</option>
+                <option value="transport" data-i18n="wheelchairCategoryTransport">Accessible Transport</option>
+              </select>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairCityTitle">City</h3>
+              <select id="wheelchair-city-select">
+                <option value="">Choose a city</option>
+                <option value="Beirut">Beirut</option>
+                <option value="Saida">Saida</option>
+                <option value="Tripoli">Tripoli</option>
+                <option value="Nabatieh">Nabatieh</option>
+                <option value="Tyre">Tyre</option>
+                <option value="Jounieh">Jounieh</option>
+              </select>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairNeighborhoodTitle">Neighborhood or area</h3>
+              <input id="wheelchair-neighborhood-input" type="text" data-placeholder-key="wheelchairNeighborhoodPlaceholder" />
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairNeedTitle">Describe the need</h3>
+              <textarea id="wheelchair-need-input" rows="5" data-placeholder-key="wheelchairNeedPlaceholder"></textarea>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairNeedsChecklistTitle">Accessibility details to check</h3>
+              <div class="checkbox-grid">
+                <label class="checkbox-item"><input type="checkbox" value="ramp" /> <span data-i18n="wheelchairNeedRamp">Ramp access</span></label>
+                <label class="checkbox-item"><input type="checkbox" value="accessible_restroom" /> <span data-i18n="wheelchairNeedRestroom">Accessible restroom</span></label>
+                <label class="checkbox-item"><input type="checkbox" value="elevator" /> <span data-i18n="wheelchairNeedElevator">Elevator</span></label>
+                <label class="checkbox-item"><input type="checkbox" value="parking" /> <span data-i18n="wheelchairNeedParking">Accessible parking</span></label>
+                <label class="checkbox-item"><input type="checkbox" value="pool" /> <span data-i18n="wheelchairNeedPool">Pool access</span></label>
+                <label class="checkbox-item"><input type="checkbox" value="gym" /> <span data-i18n="wheelchairNeedGym">Gym access</span></label>
+                <label class="checkbox-item"><input type="checkbox" value="wheelchair_vehicle" /> <span data-i18n="wheelchairNeedVehicle">Wheelchair vehicle</span></label>
+              </div>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairTransportTitle">Transport details</h3>
+              <div class="signup-grid">
+                <input id="wheelchair-pickup-input" type="text" data-placeholder-key="wheelchairPickupPlaceholder" />
+                <input id="wheelchair-destination-input" type="text" data-placeholder-key="wheelchairDestinationPlaceholder" />
+              </div>
+            </div>
+
+            <div class="button-stack">
+              <button type="button" id="wheelchair-quick-search-button" class="track-button secondary" data-i18n="wheelchairQuickSearchButton">Open quick Google Maps search</button>
+              <button type="button" id="wheelchair-analyze-button" class="track-button" data-i18n="wheelchairAnalyzeButton">Analyze with wheelchair copilot</button>
+            </div>
+            <p id="wheelchair-status" class="send-status"></p>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairListTitle">How this builds on the current work</h3>
+              <ul id="wheelchair-list" class="action-list"></ul>
+            </div>
+          </section>
+
+          <section class="panel wheelchair-output-panel">
+            <div class="result-block">
+              <h3 data-i18n="wheelchairReconstructedTitle">Reconstructed request</h3>
+              <p id="wheelchair-reconstructed-need" class="hearing-result-text"></p>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairStructuredTitle">Structured request</h3>
+              <div id="wheelchair-request-chips" class="chip-grid"></div>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairChecksTitle">What to verify first</h3>
+              <ul id="wheelchair-checks-list" class="action-list"></ul>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairMapsTitle">Google Maps searches</h3>
+              <div id="wheelchair-maps-list" class="sources-list"></div>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairRouteTitle">Best road to take</h3>
+              <div class="route-card">
+                <div class="route-strip">
+                  <div class="route-stop">
+                    <span class="route-stop-label" data-i18n="wheelchairRouteFrom">From</span>
+                    <strong id="wheelchair-route-from">-</strong>
+                  </div>
+                  <div class="route-arrow">→</div>
+                  <div class="route-stop">
+                    <span class="route-stop-label" data-i18n="wheelchairRouteTo">To</span>
+                    <strong id="wheelchair-route-to">-</strong>
+                  </div>
+                </div>
+                <p id="wheelchair-route-summary" class="hearing-result-text"></p>
+                <p id="wheelchair-route-caution" class="hearing-result-text route-caution"></p>
+                <p id="wheelchair-directions-link" class="hearing-result-text"></p>
+              </div>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairLiveResultsTitle">Live search results</h3>
+              <p id="wheelchair-live-search-summary" class="hearing-result-text"></p>
+              <div id="wheelchair-live-results" class="sources-list"></div>
+            </div>
+
+            <div class="result-block">
+              <h3 data-i18n="wheelchairQuestionsTitle">Questions to ask before you go</h3>
+              <ul id="wheelchair-questions-list" class="action-list"></ul>
+            </div>
+          </section>
+        </div>
       </section>
 
       <section id="hearing-view" class="view hidden">
