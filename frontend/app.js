@@ -48,6 +48,8 @@ const hearingReconstructedNeed = document.getElementById("hearing-reconstructed-
 const hearingBarrier = document.getElementById("hearing-barrier");
 const hearingBarrierList = document.getElementById("hearing-barrier-list");
 const hearingSummary = document.getElementById("hearing-summary");
+const hearingLiveSearchSummary = document.getElementById("hearing-live-search-summary");
+const hearingLiveSearchResults = document.getElementById("hearing-live-search-results");
 const hearingNextSteps = document.getElementById("hearing-next-steps");
 const hearingReplyDraft = document.getElementById("hearing-reply-draft");
 const hearingFollowUp = document.getElementById("hearing-follow-up");
@@ -61,7 +63,11 @@ const state = {
   hearingResult: null,
   hearingListening: false,
   hearingRecognition: null,
-  hearingAudioUrl: null
+  hearingAudioUrl: null,
+  hearingMediaRecorder: null,
+  hearingMediaStream: null,
+  hearingAudioChunks: [],
+  hearingRecorderMode: null
 };
 
 const views = {
@@ -146,6 +152,7 @@ const copy = {
     hearingResultNeedTitle: "Reconstructed need",
     hearingBarrierTitle: "Barrier detected",
     hearingSummaryTitle: "What it means",
+    hearingLiveResultsTitle: "Live search results",
     hearingNextStepsTitle: "Next steps",
     hearingReplyDraftTitle: "Reply draft",
     hearingFollowUpTitle: "Follow-up question",
@@ -154,7 +161,11 @@ const copy = {
     hearingNoInput: "Add the need, a transcript, or a reply idea first.",
     hearingListenUnsupported: "Speech recognition is not supported in this browser.",
     hearingListeningStatus: "Listening to the simulated clinic side...",
+    hearingRecordingStatus: "Recording audio for AI transcription...",
     hearingStoppedStatus: "Stopped listening.",
+    hearingTranscribingStatus: "Transcribing audio with AI...",
+    hearingTranscribeError: "Audio transcription failed. Try again.",
+    hearingMicrophoneError: "Microphone access failed. Check browser permissions and try again.",
     hearingAnalyzeError: "Hearing copilot analysis failed.",
     hearingSpeakUnsupported: "Text-to-speech is not supported in this browser.",
     hearingSpeaking: "Speaking the reply aloud...",
@@ -300,6 +311,7 @@ const copy = {
     hearingResultNeedTitle: "الحاجة بعد التوضيح",
     hearingBarrierTitle: "العائق المكتشف",
     hearingSummaryTitle: "ماذا يعني هذا",
+    hearingLiveResultsTitle: "نتائج البحث المباشر",
     hearingNextStepsTitle: "الخطوات التالية",
     hearingReplyDraftTitle: "مسودة الرد",
     hearingFollowUpTitle: "سؤال متابعة",
@@ -308,7 +320,11 @@ const copy = {
     hearingNoInput: "أضيفوا الحاجة أو النص المسموع أو فكرة الرد أولاً.",
     hearingListenUnsupported: "التعرف على الصوت غير مدعوم في هذا المتصفح.",
     hearingListeningStatus: "عم نستمع للطرف الآخر في العرض...",
+    hearingRecordingStatus: "عم نسجل الصوت للتفريغ بالذكاء الاصطناعي...",
     hearingStoppedStatus: "تم إيقاف الاستماع.",
+    hearingTranscribingStatus: "عم نفرّغ الصوت بالذكاء الاصطناعي...",
+    hearingTranscribeError: "فشل تفريغ الصوت. حاولوا مرة ثانية.",
+    hearingMicrophoneError: "فشل الوصول إلى الميكروفون. تأكدوا من صلاحيات المتصفح وحاولوا مرة ثانية.",
     hearingAnalyzeError: "فشل تحليل مساعد السمع.",
     hearingSpeakUnsupported: "تشغيل النص صوتياً غير مدعوم في هذا المتصفح.",
     hearingSpeaking: "عم نشغّل الرد صوتياً...",
@@ -551,6 +567,27 @@ function renderList(element, items) {
   });
 }
 
+function renderHearingLiveSearchResults(results) {
+  hearingLiveSearchResults.innerHTML = "";
+
+  if (!Array.isArray(results) || !results.length) {
+    return;
+  }
+
+  results.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "source-card";
+    card.innerHTML = `
+      <h4>${item.name}</h4>
+      <p>${item.type}${item.area ? ` - ${item.area}` : ""}</p>
+      <p>${item.whyMatch}</p>
+      <p>${item.contactHint}</p>
+      <p><a href="${item.sourceUrl}" target="_blank" rel="noreferrer">${item.sourceUrl}</a></p>
+    `;
+    hearingLiveSearchResults.appendChild(card);
+  });
+}
+
 function renderHearingResult(result) {
   const labels = copy[currentLanguage()];
   state.hearingResult = result;
@@ -559,9 +596,11 @@ function renderHearingResult(result) {
     hearingReconstructedNeed.textContent = "";
     hearingBarrier.textContent = "";
     hearingSummary.textContent = "";
+    hearingLiveSearchSummary.textContent = "";
     hearingFollowUp.textContent = "";
     hearingReplyDraft.value = "";
     renderList(hearingBarrierList, []);
+    renderHearingLiveSearchResults([]);
     renderList(hearingNextSteps, []);
     hearingStatus.textContent = labels.hearingIdle;
     return;
@@ -570,9 +609,11 @@ function renderHearingResult(result) {
   hearingReconstructedNeed.textContent = result.reconstructedNeed || "";
   hearingBarrier.textContent = result.communicationBarrier || "";
   hearingSummary.textContent = result.simpleSummary || "";
+  hearingLiveSearchSummary.textContent = result.liveSearchSummary || "";
   hearingFollowUp.textContent = result.followUpQuestion || "";
   hearingReplyDraft.value = result.replyDraft || result.spokenReply || "";
   renderList(hearingBarrierList, result.barrierSignals || []);
+  renderHearingLiveSearchResults(result.liveSearchResults || []);
   renderList(hearingNextSteps, result.nextSteps || []);
   hearingStatus.textContent = labels.hearingReady;
 }
@@ -621,6 +662,153 @@ function createSpeechRecognition() {
   recognition.interimResults = true;
   state.hearingRecognition = recognition;
   return state.hearingRecognition;
+}
+
+function stopHearingMediaStream() {
+  if (!state.hearingMediaStream) {
+    return;
+  }
+
+  state.hearingMediaStream.getTracks().forEach((track) => track.stop());
+  state.hearingMediaStream = null;
+}
+
+async function transcribeRecordedAudio(audioBlob) {
+  const labels = copy[currentLanguage()];
+  hearingStatus.textContent = labels.hearingTranscribingStatus;
+
+  const audioBase64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      const [, base64 = ""] = result.split(",");
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error(labels.hearingTranscribeError));
+    reader.readAsDataURL(audioBlob);
+  });
+
+  const response = await fetch("/api/hearing-transcribe", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      audioBase64,
+      mimeType: audioBlob.type || "audio/webm",
+      inputLanguage: getHearingInputLanguage()
+    })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || labels.hearingTranscribeError);
+  }
+
+  hearingTranscriptInput.value = result.transcript || "";
+  hearingStatus.textContent = labels.hearingReady;
+}
+
+async function startRecorderListening() {
+  const labels = copy[currentLanguage()];
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+    ? "audio/webm;codecs=opus"
+    : (MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "");
+
+  state.hearingAudioChunks = [];
+  state.hearingMediaStream = stream;
+  state.hearingMediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+  state.hearingRecorderMode = "media";
+  state.hearingListening = true;
+
+  hearingTranscriptInput.value = "";
+  hearingListenButton.textContent = labels.hearingStopListeningButton;
+  hearingStatus.textContent = labels.hearingRecordingStatus;
+
+  state.hearingMediaRecorder.ondataavailable = (event) => {
+    if (event.data && event.data.size > 0) {
+      state.hearingAudioChunks.push(event.data);
+    }
+  };
+
+  state.hearingMediaRecorder.onerror = () => {
+    state.hearingListening = false;
+    state.hearingRecorderMode = null;
+    hearingListenButton.textContent = labels.hearingListenButton;
+    hearingStatus.textContent = labels.hearingTranscribeError;
+    stopHearingMediaStream();
+  };
+
+  state.hearingMediaRecorder.onstop = async () => {
+    const mime = state.hearingMediaRecorder && state.hearingMediaRecorder.mimeType
+      ? state.hearingMediaRecorder.mimeType
+      : "audio/webm";
+    const blob = new Blob(state.hearingAudioChunks, { type: mime });
+
+    state.hearingListening = false;
+    state.hearingRecorderMode = null;
+    hearingListenButton.textContent = labels.hearingListenButton;
+    stopHearingMediaStream();
+
+    if (!blob.size) {
+      hearingStatus.textContent = labels.hearingTranscribeError;
+      return;
+    }
+
+    try {
+      await transcribeRecordedAudio(blob);
+    } catch (error) {
+      hearingStatus.textContent = error.message || labels.hearingTranscribeError;
+    } finally {
+      state.hearingAudioChunks = [];
+      state.hearingMediaRecorder = null;
+    }
+  };
+
+  state.hearingMediaRecorder.start();
+}
+
+function startRecognitionFallback() {
+  const labels = copy[currentLanguage()];
+  const recognition = createSpeechRecognition();
+
+  if (!recognition) {
+    hearingStatus.textContent = labels.hearingListenUnsupported;
+    return false;
+  }
+
+  state.hearingRecorderMode = "recognition";
+  state.hearingListening = true;
+  hearingTranscriptInput.value = "";
+  hearingListenButton.textContent = labels.hearingStopListeningButton;
+  hearingStatus.textContent = labels.hearingListeningStatus;
+
+  recognition.onresult = (event) => {
+    const transcript = Array.from(event.results)
+      .map((result) => result[0].transcript)
+      .join(" ")
+      .trim();
+
+    hearingTranscriptInput.value = transcript;
+  };
+
+  recognition.onerror = () => {
+    state.hearingListening = false;
+    state.hearingRecorderMode = null;
+    hearingListenButton.textContent = labels.hearingListenButton;
+    hearingStatus.textContent = labels.hearingStoppedStatus;
+  };
+
+  recognition.onend = () => {
+    state.hearingListening = false;
+    state.hearingRecorderMode = null;
+    hearingListenButton.textContent = labels.hearingListenButton;
+  };
+
+  recognition.start();
+  return true;
 }
 
 function renderRequest(request) {
@@ -976,47 +1164,39 @@ async function analyzeHearingSupport() {
 
 function toggleHearingListening() {
   const labels = copy[currentLanguage()];
-  const recognition = createSpeechRecognition();
-
-  if (!recognition) {
-    hearingStatus.textContent = labels.hearingListenUnsupported;
-    return;
-  }
 
   if (state.hearingListening) {
-    state.hearingListening = false;
-    hearingListenButton.textContent = labels.hearingListenButton;
-    recognition.stop();
-    hearingStatus.textContent = labels.hearingStoppedStatus;
+    if (state.hearingRecorderMode === "media" && state.hearingMediaRecorder) {
+      hearingStatus.textContent = labels.hearingTranscribingStatus;
+      state.hearingMediaRecorder.stop();
+      return;
+    }
+
+    if (state.hearingRecorderMode === "recognition") {
+      const recognition = createSpeechRecognition();
+      state.hearingListening = false;
+      state.hearingRecorderMode = null;
+      hearingListenButton.textContent = labels.hearingListenButton;
+      if (recognition) {
+        recognition.stop();
+      }
+      hearingStatus.textContent = labels.hearingStoppedStatus;
+    }
+
     return;
   }
 
-  hearingTranscriptInput.value = "";
-  state.hearingListening = true;
-  hearingListenButton.textContent = labels.hearingStopListeningButton;
-  hearingStatus.textContent = labels.hearingListeningStatus;
+  if (window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    startRecorderListening().catch(() => {
+      const startedFallback = startRecognitionFallback();
+      if (!startedFallback) {
+        hearingStatus.textContent = labels.hearingMicrophoneError;
+      }
+    });
+    return;
+  }
 
-  recognition.onresult = (event) => {
-    const transcript = Array.from(event.results)
-      .map((result) => result[0].transcript)
-      .join(" ")
-      .trim();
-
-    hearingTranscriptInput.value = transcript;
-  };
-
-  recognition.onerror = () => {
-    state.hearingListening = false;
-    hearingListenButton.textContent = labels.hearingListenButton;
-    hearingStatus.textContent = labels.hearingStoppedStatus;
-  };
-
-  recognition.onend = () => {
-    state.hearingListening = false;
-    hearingListenButton.textContent = labels.hearingListenButton;
-  };
-
-  recognition.start();
+  startRecognitionFallback();
 }
 
 async function speakWithAiVoice(text) {

@@ -41,6 +41,82 @@ async function generateJson(prompt) {
   return extractJsonObject(response.output_text);
 }
 
+function extractCityHint(text) {
+  const source = normalizeText(text).toLowerCase();
+  const knownCities = ["beirut", "tripoli", "sidon", "saida", "tyre", "jounieh", "zahle", "baalbek", "nabatieh"];
+  return knownCities.find((city) => source.includes(city)) || "Beirut";
+}
+
+async function searchHearingWeb(payload) {
+  const client = getOpenAIClient();
+  const cityHint = extractCityHint(`${payload.userNeed} ${payload.searchScope} ${payload.incomingTranscript}`);
+
+  const response = await client.responses.create({
+    model: process.env.OPENAI_SEARCH_MODEL || process.env.OPENAI_MODEL || "gpt-5-mini",
+    tools: [
+      {
+        type: "web_search_preview",
+        search_context_size: "medium",
+        user_location: {
+          type: "approximate",
+          country: "LB",
+          city: cityHint
+        }
+      }
+    ],
+    tool_choice: {
+      mode: "required",
+      tools: [
+        {
+          type: "web_search_preview"
+        }
+      ]
+    },
+    input: [
+      {
+        role: "developer",
+        content: [
+          {
+            type: "input_text",
+            text: `
+Use live web search to find real places or services in Lebanon relevant to this hearing-access request.
+Prefer official websites, official ordering/contact pages, or strong public listings.
+Return only valid JSON with no markdown fences.
+
+Required JSON shape:
+{
+  "liveSearchSummary": "string",
+  "liveSearchResults": [
+    {
+      "name": "string",
+      "type": "string",
+      "area": "string",
+      "whyMatch": "string",
+      "contactHint": "string",
+      "sourceUrl": "string"
+    }
+  ]
+}
+
+Rules:
+- Return up to 5 results.
+- Only include results you actually found via web search.
+- If the request is broad, prioritize the clearest matches.
+- If no strong matches are found, return an empty liveSearchResults array and explain that in liveSearchSummary.
+- Do not invent URLs, names, or contact methods.
+
+Request:
+${JSON.stringify(payload, null, 2)}
+            `.trim()
+          }
+        ]
+      }
+    ]
+  });
+
+  return extractJsonObject(response.output_text);
+}
+
 function sanitizeAssistPayload(payload) {
   return {
     language: languageFrom(payload),
@@ -68,7 +144,13 @@ async function assistWithHearingSupport(payload) {
   ensureUsefulInput(sanitized);
 
   const prompt = buildHearingAssistPrompt(sanitized);
-  const result = await generateJson(prompt);
+  const [result, liveSearch] = await Promise.all([
+    generateJson(prompt),
+    searchHearingWeb(sanitized).catch(() => ({
+      liveSearchSummary: "",
+      liveSearchResults: []
+    }))
+  ]);
 
   return {
     language: sanitized.language,
@@ -80,6 +162,19 @@ async function assistWithHearingSupport(payload) {
     simpleSummary: normalizeText(result.simpleSummary),
     nextSteps: Array.isArray(result.nextSteps)
       ? result.nextSteps.map((item) => normalizeText(item)).filter(Boolean)
+      : [],
+    liveSearchSummary: normalizeText(liveSearch.liveSearchSummary),
+    liveSearchResults: Array.isArray(liveSearch.liveSearchResults)
+      ? liveSearch.liveSearchResults
+        .map((item) => ({
+          name: normalizeText(item && item.name),
+          type: normalizeText(item && item.type),
+          area: normalizeText(item && item.area),
+          whyMatch: normalizeText(item && item.whyMatch),
+          contactHint: normalizeText(item && item.contactHint),
+          sourceUrl: normalizeText(item && item.sourceUrl)
+        }))
+        .filter((item) => item.name && item.sourceUrl)
       : [],
     replyDraft: normalizeText(result.replyDraft),
     spokenReply: normalizeText(result.spokenReply),
