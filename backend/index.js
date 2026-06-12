@@ -2,6 +2,7 @@ require("dotenv").config();
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
+const { toFile } = require("../ai agent/node_modules/openai");
 const { sendEmail } = require("./services/mailer");
 const { addVolunteerSignup } = require("./services/volunteerRegistry");
 const { getOpenAIClient } = require("../ai agent/services/openaiClient");
@@ -17,7 +18,9 @@ const port = process.env.PORT || 4000;
 const frontendPath = path.join(__dirname, "..", "frontend");
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+  limit: "15mb"
+}));
 app.use(express.static(frontendPath));
 
 app.get("/api/health", (req, res) => {
@@ -77,10 +80,66 @@ app.post("/api/hearing-assist", async (req, res, next) => {
     console.info("[api] /api/hearing-assist response", JSON.stringify({
       hasNeed: Boolean(result.reconstructedNeed),
       barrierSignals: result.barrierSignals.length,
-      nextSteps: result.nextSteps.length
+      nextSteps: result.nextSteps.length,
+      liveSearchResults: Array.isArray(result.liveSearchResults) ? result.liveSearchResults.length : 0
     }));
 
     res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/api/hearing-transcribe", async (req, res, next) => {
+  try {
+    const audioBase64 = String(req.body && req.body.audioBase64 ? req.body.audioBase64 : "").trim();
+    const mimeType = String(req.body && req.body.mimeType ? req.body.mimeType : "audio/webm").trim();
+    const inputLanguage = String(req.body && req.body.inputLanguage ? req.body.inputLanguage : "mixed").trim();
+
+    console.info("[api] /api/hearing-transcribe request", JSON.stringify({
+      inputLanguage,
+      mimeType,
+      hasAudio: Boolean(audioBase64),
+      audioLength: audioBase64.length
+    }));
+
+    if (!audioBase64) {
+      return res.status(400).json({
+        error: "Missing recorded audio"
+      });
+    }
+
+    const client = getOpenAIClient();
+    const buffer = Buffer.from(audioBase64, "base64");
+    const extension = mimeType.includes("mp4")
+      ? "mp4"
+      : mimeType.includes("mpeg")
+        ? "mp3"
+        : mimeType.includes("ogg")
+          ? "ogg"
+          : "webm";
+    const audioFile = await toFile(buffer, `hearing-input.${extension}`, {
+      type: mimeType
+    });
+
+    const transcription = await client.audio.transcriptions.create({
+      file: audioFile,
+      model: process.env.OPENAI_STT_MODEL || "gpt-4o-mini-transcribe",
+      prompt: "Transcribe exactly what is said. The speaker may switch between Lebanese Arabic, Arabic, English, and Arabizi in the same sentence. Keep names, places, and numbers accurate.",
+      response_format: "json"
+    });
+
+    const transcript = String(transcription.text || "").trim();
+
+    console.info("[api] /api/hearing-transcribe response", JSON.stringify({
+      textLength: transcript.length,
+      preview: transcript.slice(0, 120)
+    }));
+
+    return res.json({
+      success: true,
+      transcript
+    });
   } catch (error) {
     next(error);
   }
