@@ -6,6 +6,28 @@ const hearingView = document.getElementById("hearing-view");
 const existsList = document.getElementById("exists-list");
 const roadmapList = document.getElementById("roadmap-list");
 const wheelchairList = document.getElementById("wheelchair-list");
+const wheelchairCategorySelect = document.getElementById("wheelchair-category-select");
+const wheelchairCitySelect = document.getElementById("wheelchair-city-select");
+const wheelchairNeighborhoodInput = document.getElementById("wheelchair-neighborhood-input");
+const wheelchairNeedInput = document.getElementById("wheelchair-need-input");
+const wheelchairPickupInput = document.getElementById("wheelchair-pickup-input");
+const wheelchairDestinationInput = document.getElementById("wheelchair-destination-input");
+const wheelchairNeedCheckboxes = document.querySelectorAll("#wheelchair-view .checkbox-grid input[type='checkbox']");
+const wheelchairQuickSearchButton = document.getElementById("wheelchair-quick-search-button");
+const wheelchairAnalyzeButton = document.getElementById("wheelchair-analyze-button");
+const wheelchairStatus = document.getElementById("wheelchair-status");
+const wheelchairReconstructedNeed = document.getElementById("wheelchair-reconstructed-need");
+const wheelchairRequestChips = document.getElementById("wheelchair-request-chips");
+const wheelchairChecksList = document.getElementById("wheelchair-checks-list");
+const wheelchairMapsList = document.getElementById("wheelchair-maps-list");
+const wheelchairRouteFrom = document.getElementById("wheelchair-route-from");
+const wheelchairRouteTo = document.getElementById("wheelchair-route-to");
+const wheelchairRouteSummary = document.getElementById("wheelchair-route-summary");
+const wheelchairRouteCaution = document.getElementById("wheelchair-route-caution");
+const wheelchairDirectionsLink = document.getElementById("wheelchair-directions-link");
+const wheelchairLiveSearchSummary = document.getElementById("wheelchair-live-search-summary");
+const wheelchairLiveResults = document.getElementById("wheelchair-live-results");
+const wheelchairQuestionsList = document.getElementById("wheelchair-questions-list");
 const trackButtons = document.querySelectorAll("[data-track]");
 const chatForm = document.getElementById("chat-form");
 const chatInput = document.getElementById("chat-input");
@@ -60,6 +82,7 @@ const state = {
   structuredRequest: null,
   selectedDemoDonor: null,
   activeView: "landing",
+  wheelchairResult: null,
   hearingResult: null,
   hearingListening: false,
   hearingRecognition: null,
@@ -83,11 +106,11 @@ const copy = {
     title: "Translating Your Needs",
     landingTitle: "Translating Your Needs",
     landingHeroText:
-      "A multi-agent accessibility and emergency support project for Lebanon, starting with blood support and expanding into inclusive mobility and hearing-access assistance.",
+      "A multi-agent accessibility and emergency support project for Lebanon, combining blood support, wheelchair route planning, and hearing-access communication in one platform.",
     landingCardLabel: "Project vision",
     landingCardTitle: "One platform, multiple support tracks",
     landingCardText:
-      "Users choose the support path they need, and each agent is designed around real local problems, practical actions, and safe next steps.",
+      "Users choose the support path they need, and each agent handles a real local problem with live search, practical outputs, and safe next steps.",
     trackEyebrow: "Support Tracks",
     trackTitle: "Choose a track",
     statusLive: "Live now",
@@ -97,22 +120,67 @@ const copy = {
       "AI chat that collects urgent request details, checks official context, finds donor matches, and helps send outreach emails.",
     wheelchairTrackTitle: "Wheelchair accessibility",
     wheelchairTrackText:
-      "A future assistant for discovering accessible places, entrances, and movement-friendly options across Lebanese cities.",
+      "An accessibility copilot for restaurants, hotels, and transport that turns mobility needs into practical next steps and Google Maps searches.",
     hearingTrackTitle: "Hearing accessibility",
     hearingTrackText:
-      "AI communication copilot that reconstructs messy input, summarizes phone-first instructions, and drafts text or spoken replies.",
+      "AI communication copilot that reconstructs messy input, summarizes phone-first instructions, performs live search, and supports speech-to-text plus spoken replies.",
     openBloodTrack: "Open blood agent",
-    openWheelchairTrack: "View roadmap",
+    openWheelchairTrack: "Open wheelchair copilot",
     openHearingTrack: "Open hearing copilot",
     existsEyebrow: "What exists today",
     existsTitle: "Already implemented",
     roadmapEyebrow: "What comes next",
     roadmapTitle: "Upcoming features",
     backHome: "Back to home",
-    wheelchairEyebrow: "Track roadmap",
+    wheelchairEyebrow: "Accessibility track",
     wheelchairPlaceholderTitle: "Wheelchair accessibility assistant",
     wheelchairPlaceholderText:
-      "This track is reserved for the upcoming accessibility agent. It will focus on suitable places, entrance information, and mobility-friendly planning.",
+      "This track builds on the restaurants, hotels, and transport work your teammate started, then adds AI guidance and Google Maps search support.",
+    wheelchairCategoryTitle: "Choose the access track",
+    wheelchairCategoryDining: "Accessible Restaurants / Coffee Shops",
+    wheelchairCategoryStay: "Accessible Hotels / Resorts",
+    wheelchairCategoryTransport: "Accessible Transport",
+    wheelchairCityTitle: "City",
+    wheelchairNeighborhoodTitle: "Neighborhood or area",
+    wheelchairNeighborhoodPlaceholder: "Example: Hamra, Badaro, Verdun, Mina, Tyre center",
+    wheelchairNeedTitle: "Describe the need",
+    wheelchairNeedPlaceholder: "Example: I need a wheelchair accessible coffee shop in Beirut with an accessible restroom, or a hotel with elevator and pool access.",
+    wheelchairNeedsChecklistTitle: "Accessibility details to check",
+    wheelchairNeedRamp: "Ramp access",
+    wheelchairNeedRestroom: "Accessible restroom",
+    wheelchairNeedElevator: "Elevator",
+    wheelchairNeedParking: "Accessible parking",
+    wheelchairNeedPool: "Pool access",
+    wheelchairNeedGym: "Gym access",
+    wheelchairNeedVehicle: "Wheelchair vehicle",
+    wheelchairTransportTitle: "Transport details",
+    wheelchairPickupPlaceholder: "Pickup location, if needed",
+    wheelchairDestinationPlaceholder: "Destination, if needed",
+    wheelchairQuickSearchButton: "Open quick Google Maps search",
+    wheelchairAnalyzeButton: "Analyze with wheelchair copilot",
+    wheelchairListTitle: "How this builds on the current work",
+    wheelchairReconstructedTitle: "Reconstructed request",
+    wheelchairStructuredTitle: "Structured request",
+    wheelchairChecksTitle: "What to verify first",
+    wheelchairMapsTitle: "Google Maps searches",
+    wheelchairRouteTitle: "Best road to take",
+    wheelchairRouteFrom: "From",
+    wheelchairRouteTo: "To",
+    wheelchairLiveResultsTitle: "Live search results",
+    wheelchairQuestionsTitle: "Questions to ask before you go",
+    wheelchairIdle: "Use this track to upgrade the current restaurant, hotel, and transport pages into one accessibility workflow.",
+    wheelchairAnalyzing: "Analyzing with the wheelchair copilot...",
+    wheelchairNoInput: "Add the need, city, transport details, or accessibility requirements first.",
+    wheelchairReady: "Wheelchair copilot guidance is ready.",
+    wheelchairAnalyzeError: "Wheelchair copilot analysis failed.",
+    wheelchairQuickSearchReady: "Opened a direct Google Maps search based on the current filters.",
+    wheelchairOpenMaps: "Open in Google Maps",
+    wheelchairOpenSource: "Open source",
+    wheelchairOpenDirections: "Open driving directions",
+    wheelchairChipTrack: "Track",
+    wheelchairChipCity: "City",
+    wheelchairChipArea: "Area",
+    wheelchairChipNeeds: "Needs",
     hearingEyebrow: "Track roadmap",
     hearingPlaceholderTitle: "Hearing accessibility assistant",
     hearingPlaceholderText:
@@ -405,26 +473,26 @@ const listCopy = {
       "Official-source context checks from Lebanese institutions when reachable.",
       "Volunteer-network signups that persist and can appear in future matching.",
       "Demo and network donor cards with direct email outreach through SMTP.",
-      "Multilingual interface in English and Arabic for the blood workflow."
+      "Wheelchair live search, Google Maps planning, and hearing speech-to-text / speak-back support."
     ],
     roadmap: [
-      "Wheelchair-access track for accessible places, entrances, and route planning.",
-      "Hearing-access track for accessible communication and service discovery.",
-      "Broader hospital and blood-bank coverage across Lebanon.",
-      "Future messaging integrations such as WhatsApp after hackathon demo stage.",
-      "Richer donor-network verification and smarter matching confidence."
+      "WhatsApp / Meta integrations for phone-first and text-first outreach flows.",
+      "More real-time responsiveness for live updates, routing changes, and status refreshes.",
+      "Broader hospital, blood-bank, venue, and accessibility coverage across Lebanon.",
+      "Richer verification layers for donors, routes, and venue accessibility confidence.",
+      "Deeper community contribution loops such as verified notes and accessibility check-ins."
     ],
     wheelchair: [
-      "Accessible place discovery by city and category.",
-      "Entrance and elevator notes collected from trusted sources and community input.",
-      "Mobility-friendly route suggestions between key destinations.",
-      "A shared data layer your teammate can plug into later."
+      "Keeps the original three paths: restaurants, hotels, and transport.",
+      "Preserves the direct Google Maps search behavior as a quick action.",
+      "Adds an AI copilot that turns accessibility needs into practical checks, live results, and route guidance.",
+      "Combines venue discovery, ride planning, and best-road suggestions in one wheelchair workflow."
     ],
     hearing: [
-      "Directory of hearing-friendly clinics, centers, and support services.",
+      "Live search for hearing-friendly clinics, centers, and support services.",
       "Accessible communication guidance for hospitals, municipalities, and NGOs.",
-      "Emergency-ready phrasing, text-first contact options, and support navigation.",
-      "A future AI assistant that turns confusing service info into simple next steps."
+      "Speech-to-text transcription and text-to-speech style reply support.",
+      "AI help that turns confusing service info into simple next steps."
     ]
   },
   ar: {
@@ -476,7 +544,10 @@ function renderStaticLists() {
 
 function applyTranslations() {
   const language = currentLanguage();
-  const dictionary = copy[language];
+  const dictionary = {
+    ...copy.en,
+    ...copy[language]
+  };
 
   document.querySelectorAll("[data-i18n]").forEach((element) => {
     element.textContent = dictionary[element.dataset.i18n];
@@ -491,6 +562,10 @@ function applyTranslations() {
   volunteerCity.placeholder = dictionary.joinCity;
   volunteerContact.placeholder = dictionary.joinContact;
   volunteerAvailability.placeholder = dictionary.joinAvailability;
+  wheelchairNeighborhoodInput.placeholder = dictionary.wheelchairNeighborhoodPlaceholder;
+  wheelchairNeedInput.placeholder = dictionary.wheelchairNeedPlaceholder;
+  wheelchairPickupInput.placeholder = dictionary.wheelchairPickupPlaceholder;
+  wheelchairDestinationInput.placeholder = dictionary.wheelchairDestinationPlaceholder;
   hearingScopeInput.placeholder = dictionary.hearingScopePlaceholder;
   hearingListenButton.textContent = state.hearingListening
     ? dictionary.hearingStopListeningButton
@@ -501,6 +576,7 @@ function applyTranslations() {
   }
 
   volunteerSignupStatus.textContent = dictionary.joinIdle;
+  wheelchairStatus.textContent = state.wheelchairResult ? wheelchairStatus.textContent : dictionary.wheelchairIdle;
   hearingStatus.textContent = state.hearingResult ? hearingStatus.textContent : dictionary.hearingIdle;
   renderStaticLists();
   setDirection(language);
@@ -565,6 +641,261 @@ function renderList(element, items) {
     item.textContent = itemText;
     element.appendChild(item);
   });
+}
+
+function getWheelchairLabels() {
+  return {
+    ...copy.en,
+    ...copy[currentLanguage()]
+  };
+}
+
+function getWheelchairAccessibilityNeeds() {
+  return Array.from(wheelchairNeedCheckboxes)
+    .filter((input) => input.checked)
+    .map((input) => input.value);
+}
+
+function getWheelchairPayload() {
+  return {
+    language: currentLanguage(),
+    category: wheelchairCategorySelect.value || "dining",
+    city: wheelchairCitySelect.value.trim(),
+    neighborhood: wheelchairNeighborhoodInput.value.trim(),
+    userNeed: wheelchairNeedInput.value.trim(),
+    accessibilityNeeds: getWheelchairAccessibilityNeeds(),
+    pickup: wheelchairPickupInput.value.trim(),
+    destination: wheelchairDestinationInput.value.trim()
+  };
+}
+
+function buildWheelchairQuickQuery(payload) {
+  const categoryTerms = {
+    dining: "wheelchair accessible restaurants cafes",
+    stay: "wheelchair accessible hotels resorts",
+    transport: "wheelchair accessible transport taxi"
+  };
+
+  const needTerms = [];
+  if (payload.accessibilityNeeds.includes("ramp")) needTerms.push("ramp");
+  if (payload.accessibilityNeeds.includes("accessible_restroom")) needTerms.push("accessible restroom");
+  if (payload.accessibilityNeeds.includes("elevator")) needTerms.push("elevator");
+  if (payload.accessibilityNeeds.includes("parking")) needTerms.push("accessible parking");
+  if (payload.accessibilityNeeds.includes("pool")) needTerms.push("pool");
+  if (payload.accessibilityNeeds.includes("gym")) needTerms.push("gym");
+  if (payload.accessibilityNeeds.includes("wheelchair_vehicle")) needTerms.push("wheelchair accessible vehicle");
+
+  const area = [payload.neighborhood, payload.city, "Lebanon"].filter(Boolean).join(", ");
+  const route = payload.pickup && payload.destination
+    ? `${payload.pickup} to ${payload.destination}`
+    : "";
+
+  return [
+    categoryTerms[payload.category] || "wheelchair accessible places",
+    area,
+    route,
+    needTerms.join(" "),
+    payload.userNeed
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+}
+
+function renderWheelchairRequest(result) {
+  wheelchairRequestChips.innerHTML = "";
+
+  if (!result) {
+    return;
+  }
+
+  const labels = getWheelchairLabels();
+  const needLabels = {
+    ramp: labels.wheelchairNeedRamp,
+    accessible_restroom: labels.wheelchairNeedRestroom,
+    elevator: labels.wheelchairNeedElevator,
+    parking: labels.wheelchairNeedParking,
+    pool: labels.wheelchairNeedPool,
+    gym: labels.wheelchairNeedGym,
+    wheelchair_vehicle: labels.wheelchairNeedVehicle
+  };
+  const categoryLabels = {
+    dining: labels.wheelchairCategoryDining,
+    stay: labels.wheelchairCategoryStay,
+    transport: labels.wheelchairCategoryTransport,
+    public_place: labels.wheelchairTrackTitle,
+    mixed: labels.wheelchairTrackTitle
+  };
+  const chips = [
+    [labels.wheelchairChipTrack, categoryLabels[result.category] || result.category || ""],
+    [labels.wheelchairChipCity, result.city || ""],
+    [labels.wheelchairChipArea, result.neighborhood || ""],
+    [
+      labels.wheelchairChipNeeds,
+      Array.isArray(result.accessibilityNeeds)
+        ? result.accessibilityNeeds.map((item) => needLabels[item] || item).join(", ")
+        : ""
+    ]
+  ];
+
+  chips
+    .filter(([, value]) => value)
+    .forEach(([label, value]) => {
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
+      wheelchairRequestChips.appendChild(chip);
+    });
+}
+
+function renderWheelchairMapsResults(searches) {
+  wheelchairMapsList.innerHTML = "";
+  const labels = getWheelchairLabels();
+
+  if (!Array.isArray(searches) || !searches.length) {
+    return;
+  }
+
+  searches.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "source-card";
+    card.innerHTML = `
+      <h4>${item.title}</h4>
+      <p>${item.query}</p>
+      <p>${item.whyMatch}</p>
+      <p><a href="${item.url}" target="_blank" rel="noreferrer">${labels.wheelchairOpenMaps}</a></p>
+    `;
+    wheelchairMapsList.appendChild(card);
+  });
+}
+
+function renderWheelchairLiveResults(results) {
+  wheelchairLiveResults.innerHTML = "";
+  const labels = getWheelchairLabels();
+
+  if (!Array.isArray(results) || !results.length) {
+    return;
+  }
+
+  results.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "source-card live";
+    card.innerHTML = `
+      <h4>${item.name}</h4>
+      <p>${item.type}${item.area ? ` - ${item.area}` : ""}</p>
+      <p>${item.whyMatch}</p>
+      <p>${item.accessHint}</p>
+      <p><a href="${item.sourceUrl}" target="_blank" rel="noreferrer">${labels.wheelchairOpenSource}</a></p>
+    `;
+    wheelchairLiveResults.appendChild(card);
+  });
+}
+
+function compactWheelchairText(text) {
+  const normalized = String(text || "").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  const sentences = normalized.split(/(?<=[.!?])\s+/).filter(Boolean);
+  return sentences.slice(0, 2).join(" ");
+}
+
+function renderWheelchairResult(result) {
+  const labels = getWheelchairLabels();
+  state.wheelchairResult = result;
+
+  if (!result) {
+    wheelchairRouteFrom.textContent = "-";
+    wheelchairRouteTo.textContent = "-";
+    wheelchairReconstructedNeed.textContent = "";
+    wheelchairRouteSummary.textContent = "";
+    wheelchairRouteCaution.textContent = "";
+    wheelchairDirectionsLink.textContent = "";
+    wheelchairLiveSearchSummary.textContent = "";
+    renderWheelchairRequest(null);
+    renderList(wheelchairChecksList, []);
+    renderWheelchairMapsResults([]);
+    renderWheelchairLiveResults([]);
+    renderList(wheelchairQuestionsList, []);
+    wheelchairStatus.textContent = labels.wheelchairIdle;
+    return;
+  }
+
+  const routeOrigin = wheelchairPickupInput.value.trim() || result.city || "-";
+  const routeDestination = wheelchairDestinationInput.value.trim() || result.neighborhood || result.city || "-";
+  const routeCaution = Array.isArray(result.routeWarnings) && result.routeWarnings.length
+    ? compactWheelchairText(result.routeWarnings[0])
+    : "";
+
+  wheelchairRouteFrom.textContent = routeOrigin;
+  wheelchairRouteTo.textContent = routeDestination;
+  wheelchairReconstructedNeed.textContent = result.reconstructedNeed || "";
+  wheelchairRouteSummary.textContent = compactWheelchairText(result.routeSummary || result.routeSearchSummary || "");
+  wheelchairRouteCaution.textContent = routeCaution;
+  wheelchairLiveSearchSummary.textContent = result.liveSearchSummary || "";
+  renderWheelchairRequest(result);
+  renderList(wheelchairChecksList, result.practicalChecks || []);
+  renderWheelchairMapsResults(result.googleMapsSearches || []);
+  renderWheelchairLiveResults(result.liveSearchResults || []);
+  renderList(wheelchairQuestionsList, (result.verificationQuestions || []).slice(0, 3));
+  if (result.directionsUrl) {
+    const labels = getWheelchairLabels();
+    wheelchairDirectionsLink.innerHTML = `<a href="${result.directionsUrl}" target="_blank" rel="noreferrer">${labels.wheelchairOpenDirections}</a>`;
+  } else {
+    wheelchairDirectionsLink.textContent = "";
+  }
+  wheelchairStatus.textContent = labels.wheelchairReady;
+}
+
+async function analyzeWheelchairSupport() {
+  const labels = getWheelchairLabels();
+  const payload = getWheelchairPayload();
+
+  if (
+    !payload.userNeed
+    && !payload.city
+    && !payload.neighborhood
+    && !payload.accessibilityNeeds.length
+    && !payload.pickup
+    && !payload.destination
+  ) {
+    wheelchairStatus.textContent = labels.wheelchairNoInput;
+    return;
+  }
+
+  wheelchairStatus.textContent = labels.wheelchairAnalyzing;
+
+  const response = await fetch("/api/wheelchair-assist", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    wheelchairStatus.textContent = result.error || labels.wheelchairAnalyzeError;
+    return;
+  }
+
+  renderWheelchairResult(result);
+}
+
+function openWheelchairQuickSearch() {
+  const labels = getWheelchairLabels();
+  const payload = getWheelchairPayload();
+  const query = buildWheelchairQuickQuery(payload);
+
+  if (!query) {
+    wheelchairStatus.textContent = labels.wheelchairNoInput;
+    return;
+  }
+
+  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, "_blank");
+  wheelchairStatus.textContent = labels.wheelchairQuickSearchReady;
 }
 
 function renderHearingLiveSearchResults(results) {
@@ -1303,6 +1634,7 @@ languageSelect.addEventListener("change", () => {
   applyTranslations();
   renderChat();
   renderPlan(state.plan, state.structuredRequest);
+  renderWheelchairResult(state.wheelchairResult);
   renderHearingResult(state.hearingResult);
   if (window.speechSynthesis) {
     window.speechSynthesis.cancel();
@@ -1318,6 +1650,8 @@ trackButtons.forEach((button) => {
 chatForm.addEventListener("submit", sendMessage);
 sendEmailButton.addEventListener("click", sendEmailMessage);
 volunteerSignupButton.addEventListener("click", submitVolunteerSignup);
+wheelchairQuickSearchButton.addEventListener("click", openWheelchairQuickSearch);
+wheelchairAnalyzeButton.addEventListener("click", analyzeWheelchairSupport);
 hearingSearchButton.addEventListener("click", analyzeHearingSupport);
 hearingAnalyzeButton.addEventListener("click", analyzeHearingSupport);
 hearingListenButton.addEventListener("click", toggleHearingListening);
@@ -1325,5 +1659,6 @@ hearingSpeakButton.addEventListener("click", speakHearingReply);
 
 applyTranslations();
 initializeRoute();
+renderWheelchairResult(null);
 renderHearingResult(null);
 addMessage("assistant", copy[currentLanguage()].welcome);
