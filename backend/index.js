@@ -288,9 +288,9 @@ app.use((error, req, res, next) => {
     });
   }
 
-  if (error && error.code === "missing_smtp_config") {
+  if (error && error.code === "missing_resend_config") {
     return res.status(503).json({
-      error: "SMTP configuration is missing. Add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and EMAIL_FROM."
+      error: "Resend configuration is missing. Add RESEND_API_KEY and EMAIL_FROM."
     });
   }
 
